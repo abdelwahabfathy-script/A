@@ -62,6 +62,27 @@ const defaultArabicProject: ScreenplayProject = {
 export default function App() {
   const [screen, setScreen] = useState<'HOME' | 'EDITOR' | 'SETTINGS'>('HOME');
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  // Capture the browser PWA beforeinstallprompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallPWA = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User prompt choice outcomes: ${outcome}`);
+    setDeferredPrompt(null);
+  };
 
   // Settings state with Local Storage sync
   const [settings, setSettings] = useState<UserSettings>(() => {
@@ -301,6 +322,8 @@ export default function App() {
           settings={settings}
           onUpdateSettings={setSettings}
           onBack={() => setScreen('HOME')}
+          deferredPrompt={deferredPrompt}
+          onInstallPWA={handleInstallPWA}
         />
       )}
     </MobileFrame>

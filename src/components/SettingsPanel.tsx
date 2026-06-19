@@ -1,17 +1,21 @@
 import React from 'react';
 import { UserSettings, translations } from '../types';
-import { ArrowLeft, Moon, Sun, Languages, Hash, Type, Save, ArrowRightLeft } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Languages, Hash, Type, Save, ArrowRightLeft, Smartphone, Info } from 'lucide-react';
 
 interface SettingsPanelProps {
   settings: UserSettings;
   onUpdateSettings: (settings: UserSettings) => void;
   onBack: () => void;
+  deferredPrompt: any;
+  onInstallPWA: () => void;
 }
 
 export default function SettingsPanel({
   settings,
   onUpdateSettings,
   onBack,
+  deferredPrompt,
+  onInstallPWA,
 }: SettingsPanelProps) {
   const t = translations[settings.language];
   const isRtl = settings.language === 'ar';
@@ -240,6 +244,63 @@ export default function SettingsPanel({
               }`} />
             </button>
           </div>
+        </div>
+
+        {/* PWA Installation Section */}
+        <div className={`p-4 rounded-3xl border transition-all ${
+          settings.darkMode ? 'bg-zinc-950/40 border-zinc-800/80' : 'bg-white border-[#E0E0E0]'
+        }`}>
+          <div className="flex items-start gap-3 mb-4">
+            <div className={`p-2 rounded-2xl ${
+              settings.darkMode ? 'bg-zinc-800 text-purple-400' : 'bg-purple-100 text-purple-600'
+            }`}>
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm">
+                {settings.language === 'ar' ? 'تطبيق ويب تقدمي (PWA)' : 'Install Scene Writer App'}
+              </h3>
+              <p className={`text-[11px] leading-normal font-medium mt-0.5 ${settings.darkMode ? 'text-zinc-500' : 'text-brand-text'}`}>
+                {settings.language === 'ar' 
+                  ? 'قم بتثبيت التطبيق على هاتفك أو حاسوبك للعمل بكفاءة دون إنترنت والحصول على تجربة ملء الشاشة بالكامل.' 
+                  : 'Install this application to use it full-screen, completely offline without internet connection like a native mobile app.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Conditional rendering based on browser direct prompt state */}
+          {deferredPrompt ? (
+            <button
+              id="settings_install_pwa_btn"
+              onClick={onInstallPWA}
+              className="w-full py-3 px-4 rounded-2xl bg-brand-primary text-white text-xs font-bold transition-all shadow hover:opacity-90 active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span>{settings.language === 'ar' ? 'تثبيت "كاتب السيناريو" الآن' : 'Install Scene Writer App'}</span>
+            </button>
+          ) : (
+            <div className={`p-3 rounded-2xl text-[11px] leading-relaxed font-semibold flex flex-col gap-2 ${
+              settings.darkMode ? 'bg-zinc-900/60 text-zinc-400' : 'bg-slate-50 text-slate-600'
+            }`}>
+              <span className="flex items-center gap-1.5 font-bold">
+                <Info className="w-3.5 h-3.5" />
+                <span>{settings.language === 'ar' ? 'طريقة التثبيت السريعة:' : 'Quick Installation Guide:'}</span>
+              </span>
+              <ul className={`list-disc list-inside space-y-1 ${settings.language === 'ar' ? 'text-right' : 'text-left'}`}>
+                {settings.language === 'ar' ? (
+                  <>
+                    <li>على <b>أندرويد / كروم:</b> اضغط على القائمة (⋮) ثم اختر "تثبيت التطبيق".</li>
+                    <li>على <b>آيفون / سفاري:</b> اضغط على "مشاركة" (شارك) ثم مرر لأسفل واختر "إضافة إلى الشاشة الرئيسية".</li>
+                  </>
+                ) : (
+                  <>
+                    <li>On <b>Android / Chrome:</b> Tap the browser settings menu (⋮) and select "Install App".</li>
+                    <li>On <b>iPhone / Safari:</b> Tap the "Share" button, scroll down and choose "Add to Home Screen".</li>
+                  </>
+                )}
+              </ul>
+            </div>
+          )}
         </div>
 
       </div>
