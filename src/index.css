@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #6750A4;
+  --color-brand-container: #E8DEF8;
+  --color-brand-dark: #1D192B;
+  --color-brand-text: #49454F;
+  --color-brand-sidebar: #F7F2FA;
+  --color-brand-border: #CAC4D0;
+  --color-brand-canvas: #F3F4F6;
+  --font-sans: "Inter", "Cairo", system-ui, sans-serif;
+  --font-mono: "Courier Prime", ui-monospace, monospace;
+}
+
+/* Custom fine-tunings for the screenplay formatting preview */
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent default browser scrollbar jitter */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(103, 80, 164, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(103, 80, 164, 0.4);
+}
+
