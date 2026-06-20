@@ -63,16 +63,58 @@ export default function App() {
   const [screen, setScreen] = useState<'HOME' | 'EDITOR' | 'SETTINGS'>('HOME');
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isPwa, setIsPwa] = useState<boolean>(false);
 
-  // Capture the browser PWA beforeinstallprompt
+  // Capture the browser PWA events & standalone state
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
+
+    const handleAppInstalled = () => {
+      console.log('App was installed successfully');
+      setDeferredPrompt(null);
+      setIsPwa(true);
+    };
+
+    const checkPwa = () => {
+      const isStandalone = 
+        window.matchMedia('(display-mode: standalone)').matches || 
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        (window.navigator as any).standalone === true;
+      setIsPwa(isStandalone);
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    
+    checkPwa();
+    const mediaPromptStandalone = window.matchMedia('(display-mode: standalone)');
+    const mediaPromptFullscreen = window.matchMedia('(display-mode: fullscreen)');
+    
+    try {
+      mediaPromptStandalone.addEventListener('change', checkPwa);
+      mediaPromptFullscreen.addEventListener('change', checkPwa);
+    } catch (e) {
+      try {
+        mediaPromptStandalone.addListener(checkPwa);
+        mediaPromptFullscreen.addListener(checkPwa);
+      } catch (err) {}
+    }
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+      try {
+        mediaPromptStandalone.removeEventListener('change', checkPwa);
+        mediaPromptFullscreen.removeEventListener('change', checkPwa);
+      } catch (e) {
+        try {
+          mediaPromptStandalone.removeListener(checkPwa);
+          mediaPromptFullscreen.removeListener(checkPwa);
+        } catch (err) {}
+      }
     };
   }, []);
 
@@ -287,7 +329,7 @@ export default function App() {
   const activeProject = projects.find(p => p.id === activeProjectId);
 
   return (
-    <MobileFrame themeMode={settings.darkMode ? 'dark' : 'light'} language={settings.language}>
+    <MobileFrame themeMode={settings.darkMode ? 'dark' : 'light'} language={settings.language} isPwa={isPwa}>
       {screen === 'HOME' && (
         <HomeView
           projects={projects}
@@ -298,6 +340,9 @@ export default function App() {
           onDuplicateProject={handleDuplicateProject}
           onDeleteProject={handleDeleteProject}
           onOpenSettings={() => setScreen('SETTINGS')}
+          deferredPrompt={deferredPrompt}
+          onInstallPWA={handleInstallPWA}
+          isPwa={isPwa}
         />
       )}
 
@@ -324,6 +369,7 @@ export default function App() {
           onBack={() => setScreen('HOME')}
           deferredPrompt={deferredPrompt}
           onInstallPWA={handleInstallPWA}
+          isPwa={isPwa}
         />
       )}
     </MobileFrame>

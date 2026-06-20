@@ -8,6 +8,7 @@ interface SettingsPanelProps {
   onBack: () => void;
   deferredPrompt: any;
   onInstallPWA: () => void;
+  isPwa?: boolean;
 }
 
 export default function SettingsPanel({
@@ -16,6 +17,7 @@ export default function SettingsPanel({
   onBack,
   deferredPrompt,
   onInstallPWA,
+  isPwa = false,
 }: SettingsPanelProps) {
   const t = translations[settings.language];
   const isRtl = settings.language === 'ar';
@@ -268,8 +270,21 @@ export default function SettingsPanel({
             </div>
           </div>
 
-          {/* Conditional rendering based on browser direct prompt state */}
-          {deferredPrompt ? (
+          {/* Conditional rendering based on browser direct prompt state or isPwa */}
+          {isPwa ? (
+            <div className={`p-3.5 rounded-2xl text-[11px] leading-relaxed font-bold flex items-center justify-center gap-2 ${
+              settings.darkMode 
+                ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/20' 
+                : 'bg-emerald-50 text-emerald-700 border border-emerald-150'
+            }`}>
+              <span className="text-sm">✓</span>
+              <span>
+                {settings.language === 'ar' 
+                  ? 'التطبيق مثبت بالفعل ويعمل بنمط ملء الشاشة بالكامل دون اتصال بالإنترنت!' 
+                  : 'App is already installed and running in immersive full-screen mode!'}
+              </span>
+            </div>
+          ) : deferredPrompt ? (
             <button
               id="settings_install_pwa_btn"
               onClick={onInstallPWA}

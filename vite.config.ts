@@ -39,7 +39,7 @@ export default defineConfig(() => {
           description: 'A professional, lightweight mobile screenplay writing application optimized for English and Arabic scriptwriters.',
           theme_color: '#111111',
           background_color: '#111111',
-          display: 'standalone',
+          display: 'fullscreen',
           orientation: 'portrait',
           start_url: '/',
           scope: '/',
