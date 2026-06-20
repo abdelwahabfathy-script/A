@@ -89,6 +89,63 @@ export function generatePDF(project: ScreenplayProject, settings: UserSettings):
       }
     }
 
+    const isSceneHeading = block.type === 'SCENE_HEADING';
+    if (isSceneHeading) {
+      // Set font and style first to calculate correctly
+      doc.setFont(fontName, 'bold');
+      doc.setFontSize(13.5 * fontSizeFactor);
+      
+      const upperText = text.toUpperCase();
+      // Leave 6mm horizontal padding inside the card so printWidth - 12
+      const headingLines = doc.splitTextToSize(upperText, printWidth - 12);
+      // Height includes padding and the line sizes
+      const headingBoxHeight = headingLines.length * 6.5 * fontSizeFactor + 6;
+      
+      // Spacing above the scene card (as card margins)
+      currentY += 5;
+      
+      // Overflow check for the whole box
+      if (currentY + headingBoxHeight > pageHeight - bottomMargin) {
+        doc.addPage();
+        pageNum++;
+        drawHeader(pageNum);
+        currentY = topMargin + 4;
+      }
+      
+      // Draw background of the scene card: Dark Gray #1E1E1E (RGB 30, 30, 30)
+      doc.setFillColor(30, 30, 30);
+      doc.roundedRect(leftMargin, currentY, printWidth, headingBoxHeight, 3.5, 3.5, 'F');
+      
+      // Draw left accent border: Brand Primary #6750A4 (RGB 103, 80, 164)
+      doc.setFillColor(103, 80, 164);
+      doc.roundedRect(leftMargin, currentY, 1.8, headingBoxHeight, 0.8, 0.8, 'F');
+      
+      // Draw white text
+      doc.setTextColor(255, 255, 255);
+      
+      let textLineY = currentY + 5.5 * fontSizeFactor;
+      headingLines.forEach((lineText: string) => {
+        let x = leftMargin + 6; // Left padding inside card
+        let textAlign: 'left' | 'right' | 'center' = isAr ? 'right' : 'left';
+        
+        if (textAlign === 'right') {
+          x = pageWidth - rightMargin - 6;
+        }
+        
+        doc.text(lineText, x, textLineY, { align: textAlign });
+        textLineY += 6.5 * fontSizeFactor;
+      });
+      
+      // Restore default configurations
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(fontName, 'normal');
+      doc.setFontSize(12 * fontSizeFactor);
+      
+      // Move currentY past the box plus extra spacing below the heading card
+      currentY += headingBoxHeight + 5;
+      return; // Skip standard block rendering
+    }
+
     // Set styling and horizontal positions based on element type
     let indentLeft = 0;
     let width = printWidth;
@@ -97,12 +154,6 @@ export function generatePDF(project: ScreenplayProject, settings: UserSettings):
     let isUnderline = false;
 
     switch (block.type) {
-      case 'SCENE_HEADING':
-        isBold = true;
-        text = text.toUpperCase();
-        align = isAr ? 'right' : 'left';
-        break;
-        
       case 'ACTION':
         align = isAr ? 'right' : 'left';
         break;
@@ -333,10 +384,17 @@ export function printScreenplay(project: ScreenplayProject, settings: UserSettin
         .block-heading {
           font-weight: bold;
           text-transform: uppercase;
+          background-color: #1E1E1E;
+          color: #FFFFFF;
+          padding: 10px 16px;
+          border-radius: 16px;
+          border-left: 6px solid #6750A4;
           margin-top: 24px;
-          margin-bottom: 12px;
+          margin-bottom: 24px;
           text-align: ${isAr ? 'right' : 'left'};
           page-break-after: avoid;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          font-size: 1.1em;
         }
 
         .block-action {
