@@ -15,8 +15,7 @@ export default defineConfig(() => {
 
   const srcIcon = path.resolve(__dirname, 'src/assets/images/scene_writer_pwa_icon_1781912499999.jpg');
   if (fs.existsSync(srcIcon)) {
-    fs.copyFileSync(srcIcon, path.resolve(publicDir, 'icon-192.png'));
-    fs.copyFileSync(srcIcon, path.resolve(publicDir, 'icon-512.png'));
+    // Only copy jpg files to public and do not overwrite the generated valid pngs
     fs.copyFileSync(srcIcon, path.resolve(publicDir, 'icon-192.jpg'));
     fs.copyFileSync(srcIcon, path.resolve(publicDir, 'icon-512.jpg'));
   }
@@ -45,20 +44,14 @@ export default defineConfig(() => {
           scope: '/',
           icons: [
             {
-              src: 'icon-192.png',
+              src: '/icon-192.png',
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: 'icon-512.png',
+              src: '/icon-512.png',
               sizes: '512x512',
               type: 'image/png'
-            },
-            {
-              src: 'icon.svg',
-              sizes: '512x512',
-              type: 'image/svg+xml',
-              purpose: 'any maskable'
             }
           ]
         }

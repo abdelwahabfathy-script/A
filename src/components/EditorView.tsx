@@ -337,7 +337,7 @@ export default function EditorView({
     
     switch (type) {
       case 'SCENE_HEADING':
-        return `font-bold tracking-tight uppercase border-b border-transparent py-1.5 focus:border-brand-primary/30 ${txtAlign}`;
+        return `font-bold tracking-wider uppercase py-1 text-white dark:text-zinc-100 placeholder-zinc-400 ${txtAlign}`;
       case 'ACTION':
         return `py-1 ${txtAlign} tracking-normal opacity-90`;
       case 'CHARACTER':
@@ -560,21 +560,31 @@ export default function EditorView({
             const headingNum = getScenesList().findIndex((item) => item.block.id === block.id) + 1;
             const wordCount = block.text.trim().split(/\s+/).filter(Boolean).length;
 
+            const isSceneHeading = block.type === 'SCENE_HEADING';
+
             return (
               <div
                 id={`block_item_${block.id}`}
                 key={block.id}
-                className={`flex gap-1 relative group w-full transition-all rounded-xl ${
-                  isFocused 
-                    ? settings.darkMode ? 'bg-zinc-900/60 ring-1 ring-orange-500/20' : 'bg-orange-50/50 ring-1 ring-orange-100' 
-                    : 'hover:bg-slate-100/10'
+                className={`flex gap-1 relative group w-full transition-all ${
+                  isSceneHeading
+                    ? settings.darkMode
+                      ? `rounded-xl my-4 py-1.5 px-3 bg-zinc-900 border-l-[6px] border-brand-primary border-t border-r border-b border-zinc-800 shadow-lg ${
+                          isFocused ? 'ring-2 ring-brand-primary' : ''
+                        }`
+                      : `rounded-xl my-4 py-1.5 px-3 bg-[#1E1E24] border-l-[6px] border-brand-primary text-white shadow-lg ${
+                          isFocused ? 'ring-2 ring-brand-primary/50' : ''
+                        }`
+                    : isFocused
+                      ? settings.darkMode ? 'bg-zinc-900/60 ring-1 ring-orange-500/20 rounded-xl' : 'bg-orange-50/50 ring-1 ring-orange-100 rounded-xl'
+                      : 'hover:bg-slate-100/10 rounded-xl'
                 }`}
               >
                 {/* Scene numbering dynamic labels */}
-                {block.type === 'SCENE_HEADING' && settings.sceneNumbering && (
-                  <span className={`absolute top-2.5 text-[9px] font-bold px-1.5 py-0.5 rounded opacity-70 ${
+                {isSceneHeading && settings.sceneNumbering && (
+                  <span className={`absolute top-4 text-[9px] font-bold px-2 py-0.5 rounded shadow-md z-15 ${
                     isRtl ? '-right-6' : '-left-6'
-                  } ${settings.darkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-slate-100 text-slate-500'}`}>
+                  } ${settings.darkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-brand-primary text-white'}`}>
                     🎬 {headingNum}
                   </span>
                 )}
