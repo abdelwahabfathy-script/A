@@ -57,7 +57,6 @@ export default function HomeView({
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [renameTargetId, setRenameTargetId] = useState('');
   const [renameTitle, setRenameTitle] = useState('');
-  const [showManualInstall, setShowManualInstall] = useState(false);
 
   const t = translations[settings.language];
   const isRtl = settings.language === 'ar';
@@ -200,53 +199,6 @@ export default function HomeView({
         </div>
       </div>
 
-      {/* Prominent Install App PWA Banner */}
-      {!isPwa && (
-        <div id="install_pwa_banner" className="mx-5 mb-4 select-none shrink-0">
-          <div className={`p-4 rounded-3xl border transition-all flex flex-col gap-3 relative ${
-            settings.darkMode 
-              ? 'bg-gradient-to-tr from-brand-primary/10 to-purple-500/10 border-zinc-800 text-white' 
-              : 'bg-gradient-to-tr from-brand-container to-purple-50 border-brand-primary/20 text-[#1C1B1F]'
-          }`}>
-            <div className="flex items-start gap-3">
-              <div className={`p-3 rounded-2xl shrink-0 ${
-                settings.darkMode ? 'bg-zinc-800 text-brand-primary' : 'bg-brand-primary text-white'
-              }`}>
-                <Download className="w-5 h-5 flex-shrink-0" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-sm tracking-tight">
-                  {settings.language === 'ar' ? 'تثبيت كاتب السيناريو' : 'Install Scene Writer'}
-                </h3>
-                <p className={`text-[11.5px] leading-relaxed font-semibold mt-0.5 ${
-                  settings.darkMode ? 'text-zinc-400' : 'text-slate-600'
-                }`}>
-                  {settings.language === 'ar'
-                    ? 'اكتب بملء الشاشة بالكامل، دون الحاجة للاتصال بالإنترنت وبسرعة فائقة مذهلة.'
-                    : 'Write beautifully in native full-screen, offline-first with zero lag.'}
-                </p>
-              </div>
-            </div>
-            
-            <button
-              id="btn_home_install_pwa"
-              onClick={() => {
-                if (deferredPrompt) {
-                  onInstallPWA?.();
-                } else {
-                  setShowManualInstall(true);
-                }
-              }}
-              className="w-full py-3 px-4 rounded-2xl bg-brand-primary text-white text-xs font-bold transition-all hover:opacity-95 text-center flex items-center justify-center gap-1.5 cursor-pointer shadow shadow-brand-primary/10"
-            >
-              <Download className="w-4 h-4 animate-bounce" />
-              <span>
-                {settings.language === 'ar' ? 'تثبيت "كاتب السيناريو" الآن' : 'Install App'}
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
       <div className="flex-1 px-5 pb-36 safe-pb overflow-y-auto">
         {filteredProjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-4">
@@ -514,76 +466,6 @@ export default function HomeView({
         </div>
       )}
 
-      {/* 3. Manual PWA Install Instructions Modal */}
-      {showManualInstall && (
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center px-6 z-50">
-          <div className={`w-full max-w-sm rounded-3xl p-6 shadow-2xl transition-all border ${
-            settings.darkMode ? 'bg-zinc-950 border-zinc-800 text-slate-100' : 'bg-white border-slate-100 text-[#1C1B1F]'
-          }`}>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="p-2 rounded-xl bg-brand-primary text-white">
-                <Download className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-bold tracking-tight">
-                {settings.language === 'ar' ? 'كيفية التثبيت يدوياً' : 'How to Install Manually'}
-              </h3>
-            </div>
-            
-            <p className={`text-[12px] leading-relaxed mb-4 font-semibold ${
-              settings.darkMode ? 'text-zinc-400' : 'text-slate-600'
-            }`}>
-              {settings.language === 'ar'
-                ? 'نظراً لأن متصفحك لا يدعم التثبيت المباشر بنقرة واحدة (أو كنت داخل إطار معاينة)، يمكنك تثبيت التطبيق يدوياً بسهولة:'
-                : 'Since your browser does not support instant desktop/mobile installation here, you can manually install it in seconds:'}
-            </p>
-
-            <div className={`p-4 rounded-[20px] flex flex-col gap-3 text-[11.5px] leading-relaxed mb-5 font-semibold ${
-              settings.darkMode ? 'bg-zinc-900/60 text-zinc-300' : 'bg-[#F3F4F6] text-slate-700'
-            }`}>
-              <div className="flex gap-2">
-                <span className="text-brand-primary">1.</span>
-                <p>
-                  {settings.language === 'ar' ? (
-                    <>على متصفحات <b>أندرويد / Chrome:</b> اضغط على زر القائمة النقاط الثلاث (⋮) ثم اختر <b>"تثبيت التطبيق"</b> أو "إضافة لشاشة الهاتف".</>
-                  ) : (
-                    <>On <b>Android / Chrome:</b> Tap the browser menu (⋮) and select <b>"Install App"</b> or "Add to Home Screen".</>
-                  )}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-brand-primary">2.</span>
-                <p>
-                  {settings.language === 'ar' ? (
-                    <>على أجهزة <b>آبل iOS / Safari:</b> اضغط على زر <b>مشاركة (Share 📤)</b> ثم اختر <b>"إضافة إلى الشاشة الرئيسية"</b>.</>
-                  ) : (
-                    <>On <b>iPhone & iPad (Safari):</b> Tap the <b>Share (📤)</b> button, scroll down, and select <b>"Add to Home Screen"</b>.</>
-                  )}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-brand-primary">3.</span>
-                <p>
-                  {settings.language === 'ar' ? (
-                    <>على <b>الحاسوب (Chrome / Edge):</b> اضغط على رمز <b>تحميل PWA 🖥️</b> الموجود على يسار شريط العنوان العلوي.</>
-                  ) : (
-                    <>On <b>Desktop (Chrome / Edge):</b> Click the <b>App Install icon</b> in the URL address bar.</>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-end font-semibold text-xs">
-              <button
-                id="btn_manual_install_close"
-                onClick={() => setShowManualInstall(false)}
-                className="w-full py-3.5 rounded-xl bg-brand-primary text-white hover:opacity-90 text-center transition-all cursor-pointer shadow-sm"
-              >
-                {settings.language === 'ar' ? 'فهمت، شكراً' : 'Got it, Thanks'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
