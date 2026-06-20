@@ -14,11 +14,26 @@ export interface ScreenplayBlock {
   text: string;
 }
 
+export interface ShowcaseCharacter {
+  id: string;
+  name: string;
+  gender: string;
+  age: string;
+  physicalDescription: string;
+  personalityTraits: string;
+  psychologicalTraits: string;
+  motivationsGoals: string;
+  backgroundStory: string;
+  relationships: string;
+  notes: string;
+}
+
 export interface ScreenplayProject {
   id: string;
   title: string;
   blocks: ScreenplayBlock[];
   lastModified: number;
+  characters?: ShowcaseCharacter[];
 }
 
 export interface UserSettings {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScreenplayProject, UserSettings, ScreenplayBlock, BlockType } from './types';
+import { ScreenplayProject, UserSettings, ScreenplayBlock, BlockType, ShowcaseCharacter } from './types';
 import MobileFrame from './components/MobileFrame';
 import HomeView from './components/HomeView';
 import EditorView from './components/EditorView';
@@ -64,6 +64,7 @@ export default function App() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isPwa, setIsPwa] = useState<boolean>(false);
+  const [autoOpenCharacters, setAutoOpenCharacters] = useState<boolean>(false);
 
   // Capture the browser PWA events & standalone state
   useEffect(() => {
@@ -210,6 +211,17 @@ export default function App() {
     ));
   };
 
+  const handleManageCharacters = (id: string) => {
+    handleSelectProject(id);
+    setAutoOpenCharacters(true);
+  };
+
+  const handleUpdateCharacters = (projectId: string, characters: ShowcaseCharacter[]) => {
+    setProjects(prev => prev.map(p => 
+      p.id === projectId ? { ...p, characters, lastModified: Date.now() } : p
+    ));
+  };
+
   const handleDuplicateProject = (id: string) => {
     const target = projects.find(p => p.id === id);
     if (!target) return;
@@ -343,6 +355,7 @@ export default function App() {
           deferredPrompt={deferredPrompt}
           onInstallPWA={handleInstallPWA}
           isPwa={isPwa}
+          onManageCharacters={handleManageCharacters}
         />
       )}
 
@@ -353,12 +366,19 @@ export default function App() {
           settings={settings}
           canUndo={historyIndex > 0}
           canRedo={historyIndex < historyStack.length - 1}
-          onBack={() => setScreen('HOME')}
+          onBack={() => {
+            setScreen('HOME');
+            setAutoOpenCharacters(false);
+          }}
           onUpdateBlocks={handleUpdateBlocks}
           onUndo={handleUndo}
           onRedo={handleRedo}
           onExportPdf={handleExportPdf}
           onPrintPdf={handlePrintPdf}
+          characters={activeProject.characters || []}
+          onUpdateCharacters={(chars) => handleUpdateCharacters(activeProject.id, chars)}
+          autoOpenCharacters={autoOpenCharacters}
+          onCloseCharacters={() => setAutoOpenCharacters(false)}
         />
       )}
 

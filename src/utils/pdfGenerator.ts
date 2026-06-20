@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
-import { ScreenplayBlock, ScreenplayProject, UserSettings } from '../types';
+import { ScreenplayBlock, ScreenplayProject, UserSettings, ShowcaseCharacter } from '../types';
+import { getCharacterStats } from './characterStats';
 
 /**
  * Truncates or formats lines for the PDF generator.
@@ -471,4 +472,163 @@ export function printScreenplay(project: ScreenplayProject, settings: UserSettin
     </html>
   `);
   printWindow.document.close();
+}
+
+/**
+ * Generates a clean, beautifully-aligned and spaced PDF report of all characters for the project.
+ */
+export function generateCharacterReportPDF(project: ScreenplayProject, characters: ShowcaseCharacter[], settings: UserSettings): void {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+  });
+
+  const isAr = settings.language === 'ar';
+  const pageWidth = 210;
+  const pageHeight = 297;
+  const margin = 20;
+  const contentWidth = pageWidth - (margin * 2);
+  const fontName = 'helvetica';
+  
+  doc.setFont(fontName, 'normal');
+  
+  // Title Page / Header section
+  let currentY = 25;
+  
+  doc.setFont(fontName, 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(103, 80, 164); // brand-primary color
+  doc.text(isAr ? 'تقرير قاعدة بيانات الشخصيات' : 'CHARACTER DATABASE REPORT', pageWidth / 2, currentY, { align: 'center' });
+  currentY += 10;
+  
+  doc.setFontSize(14);
+  doc.setFont(fontName, 'normal');
+  doc.setTextColor(100, 116, 139); // slate-500
+  doc.text(`${isAr ? 'سيناريو العمل:' : 'Screenplay Project:'} ${project.title}`, pageWidth / 2, currentY, { align: 'center' });
+  currentY += 15;
+  
+  doc.setLineWidth(0.4);
+  doc.setDrawColor(226, 232, 240); // slate-200
+  doc.line(margin, currentY, pageWidth - margin, currentY);
+  currentY += 12;
+  
+  if (!characters || characters.length === 0) {
+    doc.setFontSize(12);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text(isAr ? 'لا توجد شخصيات مضافة للسيناريو الحالي.' : 'No characters added to this screenplay yet.', margin, currentY);
+    doc.save(`${project.title}_characters_report.pdf`);
+    return;
+  }
+  
+  characters.forEach((char, index) => {
+    // Check page overflow
+    if (currentY > pageHeight - 35) {
+      doc.addPage();
+      currentY = 25;
+    }
+    
+    // Stats calculation
+    const stats = getCharacterStats(project.blocks, char.name, settings.language);
+    
+    // Header containing name
+    doc.setFont(fontName, 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(103, 80, 164); // brand primary purple
+    doc.text(`${index + 1}. ${char.name.toUpperCase()}`, margin, currentY);
+    doc.setTextColor(15, 23, 42); // restore dark tone
+    currentY += 8;
+    
+    // Quick Meta Information
+    doc.setFont(fontName, 'normal');
+    doc.setFontSize(10);
+    
+    const fields = [
+      { label: isAr ? 'الجنس' : 'Gender', val: char.gender || '-' },
+      { label: isAr ? 'العمر' : 'Age', val: char.age || '-' },
+      { label: isAr ? 'الملامح الجسدية' : 'Physical Description', val: char.physicalDescription || '-' },
+      { label: isAr ? 'السمات الشخصية' : 'Personality Traits', val: char.personalityTraits || '-' },
+      { label: isAr ? 'السمات النفسية' : 'Psychological Traits', val: char.psychologicalTraits || '-' },
+      { label: isAr ? 'الدوافع والأهداف' : 'Motivations & Goals', val: char.motivationsGoals || '-' },
+      { label: isAr ? 'قصة الخلفية' : 'Background Story', val: char.backgroundStory || '-' },
+      { label: isAr ? 'العلاقات' : 'Relationships', val: char.relationships || '-' },
+      { label: isAr ? 'الملاحظات' : 'Notes', val: char.notes || '-' },
+    ];
+    
+    const statsFields = [
+      { label: isAr ? 'إجمالي الظهور بالمشاهد' : 'Total Scene Appearances', val: `${stats.sceneCount}` },
+      { label: isAr ? 'أرقام المشاهد المحددة' : 'Specific Scenes', val: stats.sceneNumbers.length > 0 ? stats.sceneNumbers.join(', ') : '-' },
+      { label: isAr ? 'إجمالي سطور الحوار' : 'Dialogue Snatches', val: `${stats.dialogueCount}` },
+      { label: isAr ? 'وقت الظهور التقديري بالشاشة' : 'Est. Screen Time', val: stats.screenTimeStr },
+    ];
+    
+    // Print stats
+    doc.setFont(fontName, 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(37, 99, 235); // Blue primary
+    doc.text(isAr ? 'تحليلات نص السيناريو التلقائية:' : 'Screenplay Statistics:', margin, currentY);
+    doc.setTextColor(15, 23, 42);
+    currentY += 6;
+    
+    doc.setFont(fontName, 'normal');
+    doc.setFontSize(10);
+    statsFields.forEach(f => {
+      if (currentY > pageHeight - 20) { doc.addPage(); currentY = 25; }
+      doc.setFont(fontName, 'bold');
+      doc.text(`  • ${f.label}: `, margin, currentY);
+      doc.setFont(fontName, 'normal');
+      doc.text(`${f.val}`, margin + 50, currentY);
+      currentY += 5.5;
+    });
+    currentY += 3;
+    
+    // Print Details
+    doc.setFont(fontName, 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(103, 80, 164);
+    doc.text(isAr ? 'الملف الشخصي والسمات بالتفصيل:' : 'Character Attributes & Profile:', margin, currentY);
+    doc.setTextColor(15, 23, 42);
+    currentY += 6;
+    
+    doc.setFont(fontName, 'normal');
+    doc.setFontSize(10);
+    fields.forEach(f => {
+      if (!f.val || f.val === '-') return;
+      
+      if (currentY > pageHeight - 25) { doc.addPage(); currentY = 25; }
+      
+      const labelText = `  • ${f.label}: `;
+      doc.setFont(fontName, 'bold');
+      doc.text(labelText, margin, currentY);
+      doc.setFont(fontName, 'normal');
+      
+      const xOffset = margin + 45;
+      const textWidthRemaining = contentWidth - 45;
+      
+      const lines: string[] = doc.splitTextToSize(f.val, textWidthRemaining);
+      if (lines.length > 0) {
+        doc.text(lines[0], xOffset, currentY);
+        currentY += 5.5;
+        for (let l = 1; l < lines.length; l++) {
+          if (currentY > pageHeight - 20) { doc.addPage(); currentY = 25; }
+          doc.text(lines[l], xOffset, currentY);
+          currentY += 5.5;
+        }
+      } else {
+        currentY += 5.5;
+      }
+    });
+    
+    currentY += 6;
+    
+    // Draw card bottom separator line
+    if (index < characters.length - 1) {
+      if (currentY > pageHeight - 20) { doc.addPage(); currentY = 25; }
+      doc.setDrawColor(241, 245, 249); // slate-100
+      doc.line(margin, currentY, pageWidth - margin, currentY);
+      currentY += 10;
+    }
+  });
+
+  doc.save(`${project.title}_characters_report.pdf`);
 }

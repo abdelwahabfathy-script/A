@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ScreenplayBlock, BlockType, translations, UserSettings } from '../types';
+import { ScreenplayBlock, BlockType, translations, UserSettings, ShowcaseCharacter } from '../types';
 import { parseRawText } from '../utils/parser';
 import { 
   ArrowLeft, 
@@ -18,8 +18,10 @@ import {
   Printer,
   ChevronUp,
   ChevronDown,
-  X
+  X,
+  Users
 } from 'lucide-react';
+import CharactersPanel from './CharactersPanel';
 
 interface EditorViewProps {
   projectTitle: string;
@@ -33,6 +35,10 @@ interface EditorViewProps {
   onRedo: () => void;
   onExportPdf: () => void;
   onPrintPdf: () => void;
+  characters: ShowcaseCharacter[];
+  onUpdateCharacters: (characters: ShowcaseCharacter[]) => void;
+  autoOpenCharacters?: boolean;
+  onCloseCharacters?: () => void;
 }
 
 export default function EditorView({
@@ -46,7 +52,11 @@ export default function EditorView({
   onUndo,
   onRedo,
   onExportPdf,
-  onPrintPdf
+  onPrintPdf,
+  characters,
+  onUpdateCharacters,
+  autoOpenCharacters = false,
+  onCloseCharacters,
 }: EditorViewProps) {
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const [localBlocks, setLocalBlocks] = useState<ScreenplayBlock[]>([]);
@@ -56,6 +66,16 @@ export default function EditorView({
   const [showStats, setShowStats] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [pastedText, setPastedText] = useState('');
+  const [showCharacters, setShowCharacters] = useState(false);
+
+  // Auto-open characters state monitoring
+  useEffect(() => {
+    if (autoOpenCharacters) {
+      setShowCharacters(true);
+      setShowSceneList(false);
+      setShowStats(false);
+    }
+  }, [autoOpenCharacters]);
   
   // Local Search state in document
   const [showSearch, setShowSearch] = useState(false);
@@ -430,6 +450,7 @@ export default function EditorView({
             onClick={() => {
               setShowStats(!showStats);
               setShowSceneList(false);
+              setShowCharacters(false);
             }}
             className={`p-2 rounded-xl transition-colors ${
               showStats 
@@ -439,6 +460,24 @@ export default function EditorView({
             title={t.statistics}
           >
             <BarChart3 className="w-4.5 h-4.5" />
+          </button>
+
+          {/* Characters Database Trigger */}
+          <button
+            id="editor_btn_characters"
+            onClick={() => {
+              setShowCharacters(!showCharacters);
+              setShowStats(false);
+              setShowSceneList(false);
+            }}
+            className={`p-2 rounded-xl transition-colors ${
+              showCharacters 
+                ? 'bg-brand-primary text-white' 
+                : settings.darkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-[#E8DEF8]/50 text-brand-primary'
+            }`}
+            title={settings.language === 'ar' ? 'البطل والشخصيات' : 'Characters Database'}
+          >
+            <Users className="w-4.5 h-4.5" />
           </button>
 
           {/* Paste / Import Trigger */}
@@ -918,6 +957,18 @@ export default function EditorView({
           {t.helpText}
         </p>
       </div>
+
+      <CharactersPanel
+        isOpen={showCharacters}
+        onClose={() => {
+          setShowCharacters(false);
+          onCloseCharacters?.();
+        }}
+        blocks={localBlocks}
+        characters={characters}
+        onUpdateCharacters={onUpdateCharacters}
+        settings={settings}
+      />
 
     </div>
   );

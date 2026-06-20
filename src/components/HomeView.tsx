@@ -14,7 +14,8 @@ import {
   BookOpen,
   Download,
   Smartphone,
-  Info
+  Info,
+  Users
 } from 'lucide-react';
 
 interface HomeViewProps {
@@ -29,6 +30,7 @@ interface HomeViewProps {
   deferredPrompt?: any;
   onInstallPWA?: () => void;
   isPwa?: boolean;
+  onManageCharacters?: (id: string) => void;
 }
 
 export default function HomeView({
@@ -43,6 +45,7 @@ export default function HomeView({
   deferredPrompt,
   onInstallPWA,
   isPwa = false,
+  onManageCharacters,
 }: HomeViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -345,6 +348,18 @@ export default function HomeView({
                             >
                               <Copy className="w-3.5 h-3.5 text-brand-primary" />
                               <span>{t.duplicate}</span>
+                            </button>
+                            <button
+                              id={`btn_characters_${project.id}`}
+                              onClick={(e) => triggerMenuOption(e, project.id, () => {
+                                onManageCharacters?.(project.id);
+                              })}
+                              className={`w-full px-4 py-3 flex items-center gap-2.5 transition-colors ${
+                                settings.darkMode ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              <Users className="w-3.5 h-3.5 text-indigo-505" />
+                              <span>{settings.language === 'ar' ? 'البطل والشخصيات' : 'Characters database'}</span>
                             </button>
                             <button
                               id={`btn_delete_${project.id}`}
