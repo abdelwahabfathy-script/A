@@ -63,13 +63,13 @@ body {
 /* Standalone & Web Mobile Area Fine-Tunings */
 @media (max-width: 768px) {
   .android-notch-header {
-    padding-top: calc(14px + env(safe-area-inset-top, 24px)) !important;
+    padding-top: calc(18px + env(safe-area-inset-top, 24px)) !important;
   }
   .android-nav-toolbar {
-    padding-bottom: calc(12px + env(safe-area-inset-bottom, 16px)) !important;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 16px)) !important;
   }
   .android-fab-position {
-    bottom: calc(24px + env(safe-area-inset-bottom, 16px)) !important;
+    bottom: calc(28px + env(safe-area-inset-bottom, 16px)) !important;
   }
 }
 
