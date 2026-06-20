@@ -516,7 +516,7 @@ export default function CharactersPanel({
       }`}>
         
         {/* UPPER HEADER */}
-        <div className={`px-5 py-4 flex items-center justify-between border-b shrink-0 ${
+        <div className={`px-5 py-4 android-notch-header flex items-center justify-between border-b shrink-0 ${
           settings.darkMode ? 'bg-zinc-900/60 border-zinc-800/80' : 'bg-slate-50 border-slate-100'
         }`}>
           <div className="flex items-center gap-2">
@@ -762,7 +762,7 @@ export default function CharactersPanel({
           {/* EDIT/ADD CHARACTER FORM SHEET */}
           {showEditForm ? (
             <form onSubmit={handleSaveCharacter} className="absolute inset-0 flex flex-col bg-inherit z-25 overflow-hidden">
-              <div className={`px-5 py-3 flex justify-between items-center border-b shrink-0 ${
+              <div className={`px-5 py-3 android-notch-header flex justify-between items-center border-b shrink-0 ${
                 settings.darkMode ? 'bg-zinc-900/50 border-zinc-800' : 'bg-slate-50 border-slate-100'
               }`}>
                 <h3 className="font-bold text-xs text-brand-primary">
@@ -925,7 +925,7 @@ export default function CharactersPanel({
               </div>
 
               {/* Save footer */}
-              <div className={`p-4 border-t shrink-0 ${
+              <div className={`p-4 android-nav-toolbar border-t shrink-0 ${
                 settings.darkMode ? 'bg-zinc-900 border-zinc-805' : 'bg-slate-50 border-slate-100'
               }`}>
                 <button
@@ -1072,7 +1072,7 @@ export default function CharactersPanel({
             </div>
 
             {/* Create character bottom trigger */}
-            <div className={`px-4 pb-4 shrink-0 bg-inherit`}>
+            <div className={`px-4 pb-4 android-nav-toolbar shrink-0 bg-inherit`}>
               <button
                 id="btn_characters_add_new"
                 onClick={handleOpenAddForm}

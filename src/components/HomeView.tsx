@@ -149,7 +149,7 @@ export default function HomeView({
       settings.darkMode ? 'bg-zinc-900 text-slate-100' : 'bg-[#F3F4F6] text-[#1C1B1F]'
     }`}>
       {/* Home Header */}
-      <div className={`px-6 py-5 flex justify-between items-center border-b transition-colors ${
+      <div className={`px-6 py-5 android-notch-header flex justify-between items-center border-b transition-colors ${
         settings.darkMode ? 'border-zinc-805 bg-zinc-950/20' : 'border-[#E0E0E0] bg-white'
       }`}>
         <div className="flex items-center gap-4">
@@ -247,7 +247,7 @@ export default function HomeView({
           </div>
         </div>
       )}
-      <div className="flex-1 px-5 pb-24 overflow-y-auto">
+      <div className="flex-1 px-5 pb-36 safe-pb overflow-y-auto">
         {filteredProjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-4">
             <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
@@ -415,14 +415,14 @@ export default function HomeView({
           </div>
         )}
       </div>
-         {/* Floating Action Button for Creative Screenplays */}
+      {/* Floating Action Button for Creative Screenplays */}
       <button
         id="btn_fab_create"
         onClick={() => {
           setNewProjectTitle('');
           setShowCreateDialog(true);
         }}
-        className="absolute bottom-8 right-6 w-14 h-14 bg-brand-primary text-white rounded-full flex items-center justify-center shadow-lg hover:bg-brand-primary/95 shadow-brand-primary/20 transform hover:scale-105 transition-all z-40 cursor-pointer"
+        className="absolute bottom-8 right-6 android-fab-position w-14 h-14 bg-brand-primary text-white rounded-full flex items-center justify-center shadow-lg hover:bg-brand-primary/95 shadow-brand-primary/20 transform hover:scale-105 transition-all z-40 cursor-pointer"
         title={t.createProject}
       >
         <Plus className="w-7 h-7" />

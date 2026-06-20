@@ -402,7 +402,7 @@ export default function EditorView({
     }`}>
       
       {/* Upper Menu Toolbar */}
-      <div className={`px-4 py-3.5 flex justify-between items-center border-b select-none z-30 transition-all ${
+      <div className={`px-4 py-3.5 android-notch-header flex justify-between items-center border-b select-none z-30 transition-all ${
         settings.darkMode ? 'border-zinc-800 bg-zinc-950/40' : 'border-slate-200 bg-white/40'
       }`}>
         <div className="flex items-center gap-1">
@@ -593,7 +593,7 @@ export default function EditorView({
       }`} style={{ direction: isRtl ? 'rtl' : 'ltr' }}>
         
         {/* Subtle page margins and boundaries mock */}
-        <div className="max-w-[90%] mx-auto flex flex-col gap-3 min-h-[350px] pb-36">
+        <div className="max-w-[90%] mx-auto flex flex-col gap-3 min-h-[350px] pb-48 safe-pb">
           {localBlocks.map((block, idx) => {
             const isFocused = activeBlockId === block.id;
             const headingNum = getScenesList().findIndex((item) => item.block.id === block.id) + 1;
@@ -851,7 +851,7 @@ export default function EditorView({
       )}
 
       {/* BOTTOM FORMATTING TOOLBAR - ALWAYS VISIBLE */}
-      <div className={`px-4 py-3 border-t select-none z-30 transition-all ${
+      <div className={`px-4 py-3 android-nav-toolbar border-t select-none z-30 transition-all ${
         settings.darkMode ? 'border-zinc-800 bg-zinc-950/80' : 'border-slate-200 bg-white/95'
       } shadow-lg`}>
         

@@ -47,7 +47,7 @@ export default function SettingsPanel({
       settings.darkMode ? 'bg-zinc-900 text-slate-100' : 'bg-[#F3F4F6] text-[#1C1B1F]'
     }`}>
       {/* Header */}
-      <div className={`px-5 py-4 flex items-center gap-3 border-b transition-colors ${
+      <div className={`px-5 py-4 android-notch-header flex items-center gap-3 border-b transition-colors ${
         settings.darkMode ? 'border-zinc-805 bg-zinc-950/20' : 'border-[#E0E0E0] bg-white'
       }`}>
         <button
@@ -62,7 +62,7 @@ export default function SettingsPanel({
         <span className="font-bold text-base">{t.settings}</span>
       </div>
 
-      <div className="p-5 flex flex-col gap-6">
+      <div className="p-5 pb-24 safe-pb flex flex-col gap-6">
         {/* Dark Mode Tile */}
         <div className={`p-4 rounded-3xl border transition-all ${
           settings.darkMode ? 'bg-zinc-950/40 border-zinc-800/80' : 'bg-white border-[#E0E0E0]'

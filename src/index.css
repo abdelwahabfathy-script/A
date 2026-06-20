@@ -38,3 +38,39 @@ body {
   background: rgba(103, 80, 164, 0.4);
 }
 
+/* Universal Android Safe Area Utility Tweaks */
+@supports (padding: env(safe-area-inset-top)) {
+  .safe-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-pl {
+    padding-left: env(safe-area-inset-left);
+  }
+  .safe-pr {
+    padding-right: env(safe-area-inset-right);
+  }
+  .safe-mt {
+    margin-top: env(safe-area-inset-top);
+  }
+  .safe-mb {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Standalone & Web Mobile Area Fine-Tunings */
+@media (max-width: 768px) {
+  .android-notch-header {
+    padding-top: calc(14px + env(safe-area-inset-top, 24px)) !important;
+  }
+  .android-nav-toolbar {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 16px)) !important;
+  }
+  .android-fab-position {
+    bottom: calc(24px + env(safe-area-inset-bottom, 16px)) !important;
+  }
+}
+
+
