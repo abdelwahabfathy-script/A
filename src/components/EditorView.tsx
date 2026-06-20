@@ -337,7 +337,7 @@ export default function EditorView({
     
     switch (type) {
       case 'SCENE_HEADING':
-        return `font-bold tracking-wider uppercase py-1 text-white dark:text-zinc-100 placeholder-zinc-400 ${txtAlign}`;
+        return `font-bold tracking-wider uppercase py-1 text-white placeholder-white/40 ${txtAlign}`;
       case 'ACTION':
         return `py-1 ${txtAlign} tracking-normal opacity-90`;
       case 'CHARACTER':
@@ -568,13 +568,9 @@ export default function EditorView({
                 key={block.id}
                 className={`flex gap-1 relative group w-full transition-all ${
                   isSceneHeading
-                    ? settings.darkMode
-                      ? `rounded-xl my-4 py-1.5 px-3 bg-zinc-900 border-l-[6px] border-brand-primary border-t border-r border-b border-zinc-800 shadow-lg ${
-                          isFocused ? 'ring-2 ring-brand-primary' : ''
-                        }`
-                      : `rounded-xl my-4 py-1.5 px-3 bg-[#1E1E24] border-l-[6px] border-brand-primary text-white shadow-lg ${
-                          isFocused ? 'ring-2 ring-brand-primary/50' : ''
-                        }`
+                    ? `rounded-[16px] my-6 py-2.5 px-4 bg-[#1E1E1E] text-white shadow-md shadow-black/30 border-l-[6px] border-brand-primary ${
+                        isFocused ? 'ring-2 ring-brand-primary shadow-lg scale-[1.005]' : ''
+                      }`
                     : isFocused
                       ? settings.darkMode ? 'bg-zinc-900/60 ring-1 ring-orange-500/20 rounded-xl' : 'bg-orange-50/50 ring-1 ring-orange-100 rounded-xl'
                       : 'hover:bg-slate-100/10 rounded-xl'
@@ -601,8 +597,9 @@ export default function EditorView({
                   onKeyDown={(e) => handleKeyDown(e, block, idx)}
                   onFocus={() => setActiveBlockId(block.id)}
                   style={{ 
-                    fontSize: `${settings.fontSize}pt`,
-                    fontFamily: "'Courier Prime', 'Cairo', Courier, monospace",
+                    fontSize: `${isSceneHeading ? Math.round(settings.fontSize * 1.15) : settings.fontSize}pt`,
+                    fontFamily: "Arial, 'Cairo', sans-serif",
+                    lineHeight: '1.65',
                     resize: 'none'
                   }}
                   placeholder={

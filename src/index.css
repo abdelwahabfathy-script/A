@@ -8,8 +8,8 @@
   --color-brand-sidebar: #F7F2FA;
   --color-brand-border: #CAC4D0;
   --color-brand-canvas: #F3F4F6;
-  --font-sans: "Inter", "Cairo", system-ui, sans-serif;
-  --font-mono: "Courier Prime", ui-monospace, monospace;
+  --font-sans: "Arial", "Cairo", system-ui, sans-serif;
+  --font-mono: "Arial", "Cairo", ui-monospace, monospace;
 }
 
 /* Custom fine-tunings for the screenplay formatting preview */

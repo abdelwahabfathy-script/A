@@ -35,7 +35,7 @@ export function generatePDF(project: ScreenplayProject, settings: UserSettings):
   
   const topMargin = 25;
   const bottomMargin = 25;
-  const fontName = 'courier';
+  const fontName = 'helvetica';
   const fontSizeFactor = settings.fontSize / 12; // Scale based on settings
   
   doc.setFont(fontName, 'normal');
@@ -252,7 +252,7 @@ export function printScreenplay(project: ScreenplayProject, settings: UserSettin
       <meta charset="utf-8">
       <title>${project.title}</title>
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&family=Amiri&family=Cairo&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@400;700&display=swap');
         
         @page {
           size: A4;
@@ -260,7 +260,7 @@ export function printScreenplay(project: ScreenplayProject, settings: UserSettin
         }
 
         body {
-          font-family: 'Courier Prime', 'Cairo', 'Amiri', Courier, monospace;
+          font-family: 'Arial', 'Cairo', 'Amiri', sans-serif;
           font-size: ${settings.fontSize}pt;
           line-height: 1.6;
           color: #000;
