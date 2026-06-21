@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { ScreenplayBlock, BlockType, translations, UserSettings, ShowcaseCharacter } from '../types';
 import { parseRawText } from '../utils/parser';
 import { 
@@ -19,7 +20,8 @@ import {
   ChevronUp,
   ChevronDown,
   X,
-  Users
+  Users,
+  MoreVertical
 } from 'lucide-react';
 import CharactersPanel from './CharactersPanel';
 
@@ -82,9 +84,94 @@ export default function EditorView({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<number[]>([]); // indexes of matched blocks
   const [currentSearchIndex, setCurrentSearchIndex] = useState(-1);
+  const [showOverflowDropdown, setShowOverflowDropdown] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownPlacement, setDropdownPlacement] = useState<{
+    top?: string;
+    bottom?: string;
+    left?: string;
+    right?: string;
+    alignX: 'left' | 'right';
+    alignY: 'top' | 'bottom';
+  }>({ alignX: 'right', alignY: 'top', top: '2.75rem', right: '0' });
 
   const t = translations[settings.language];
   const isRtl = settings.language === 'ar';
+
+  useEffect(() => {
+    if (!showOverflowDropdown) return;
+
+    const calculatePosition = () => {
+      const button = buttonRef.current;
+      if (!button) return;
+
+      const rect = button.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      const menuWidth = 208; // w-52 matches 208px
+      const menuHeight = 240; // Estimated safe menu height
+
+      // Check available horizontal space
+      const canAlignRight = rect.right >= menuWidth + 8;
+      const canAlignLeft = rect.left + menuWidth <= viewportWidth - 8;
+
+      let alignX: 'left' | 'right' = 'right';
+      if (isRtl) {
+        if (canAlignLeft) {
+          alignX = 'left';
+        } else if (canAlignRight) {
+          alignX = 'right';
+        }
+      } else {
+        if (canAlignRight) {
+          alignX = 'right';
+        } else if (canAlignLeft) {
+          alignX = 'left';
+        }
+      }
+
+      // Check available vertical space
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      const alignY: 'top' | 'bottom' = (spaceBelow < menuHeight && spaceAbove > spaceBelow) ? 'bottom' : 'top';
+
+      setDropdownPlacement({
+        alignX,
+        alignY,
+        top: alignY === 'top' ? '2.75rem' : 'auto',
+        bottom: alignY === 'bottom' ? '2.75rem' : 'auto',
+        left: alignX === 'left' ? '0' : 'auto',
+        right: alignX === 'right' ? '0' : 'auto',
+      });
+    };
+
+    calculatePosition();
+    window.addEventListener('resize', calculatePosition);
+    window.addEventListener('scroll', calculatePosition, { capture: true });
+    return () => {
+      window.removeEventListener('resize', calculatePosition);
+      window.removeEventListener('scroll', calculatePosition, { capture: true });
+    };
+  }, [showOverflowDropdown, isRtl]);
+
+  useEffect(() => {
+    if (!showOverflowDropdown) return;
+    
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        buttonRef.current && !buttonRef.current.contains(event.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowOverflowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showOverflowDropdown]);
   
   const blockRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
@@ -426,100 +513,32 @@ export default function EditorView({
         </div>
 
         {/* Action button bar */}
-        <div className="flex items-center gap-1">
-          {/* Active scene list drawer trigger */}
-          <button
-            id="editor_btn_scenes"
-            onClick={() => {
-              setShowSceneList(!showSceneList);
-              setShowStats(false);
-            }}
-            className={`p-2 rounded-xl transition-colors relative ${
-              showSceneList 
-                ? 'bg-brand-primary text-white' 
-                : settings.darkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-[#E8DEF8]/50 text-brand-primary'
-            }`}
-            title={t.sceneList}
-          >
-            <Compass className="w-4.5 h-4.5" />
-          </button>
-
-          {/* Statistics trigger */}
-          <button
-            id="editor_btn_stats"
-            onClick={() => {
-              setShowStats(!showStats);
-              setShowSceneList(false);
-              setShowCharacters(false);
-            }}
-            className={`p-2 rounded-xl transition-colors ${
-              showStats 
-                ? 'bg-brand-primary text-white' 
-                : settings.darkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-[#E8DEF8]/50 text-brand-primary'
-            }`}
-            title={t.statistics}
-          >
-            <BarChart3 className="w-4.5 h-4.5" />
-          </button>
-
-          {/* Characters Database Trigger */}
-          <button
-            id="editor_btn_characters"
-            onClick={() => {
-              setShowCharacters(!showCharacters);
-              setShowStats(false);
-              setShowSceneList(false);
-            }}
-            className={`p-2 rounded-xl transition-colors ${
-              showCharacters 
-                ? 'bg-brand-primary text-white' 
-                : settings.darkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-[#E8DEF8]/50 text-brand-primary'
-            }`}
-            title={settings.language === 'ar' ? 'البطل والشخصيات' : 'Characters Database'}
-          >
-            <Users className="w-4.5 h-4.5" />
-          </button>
-
-          {/* Paste / Import Trigger */}
-          <button
-            id="editor_btn_import"
-            onClick={() => setShowImportDialog(true)}
-            className={`p-2 rounded-xl transition-colors ${
-              settings.darkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-[#E8DEF8]/50 text-brand-primary'
-            }`}
-            title="Import Raw Text"
-          >
-            <Upload className="w-4.5 h-4.5" />
-          </button>
-
-          {/* Export / Print dropdown */}
+        <div className="flex items-center gap-1.5 relative">
+          {/* PRINT BUTTON - ALWAYS VISIBLE with optional inline "Print" label */}
           <button
             id="editor_btn_print"
-            onClick={onPrintPdf}
-            className={`p-2 rounded-xl transition-colors ${
-              settings.darkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-[#E8DEF8]/50 text-brand-primary'
+            onClick={() => {
+              setShowOverflowDropdown(false);
+              onPrintPdf();
+            }}
+            className={`p-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-bold text-xs ${
+              settings.darkMode 
+                ? 'bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border border-brand-primary/30' 
+                : 'bg-brand-primary text-white hover:opacity-90 shadow shadow-brand-primary/15'
             }`}
-            title={t.exportPdf}
+            title={settings.language === 'ar' ? 'طباعة / تصدير PDF' : 'Print PDF Screenplay'}
           >
-            <Printer className="w-4.5 h-4.5" />
-          </button>
-
-          {/* Fast PDF direct download */}
-          <button
-            id="editor_btn_export"
-            onClick={onExportPdf}
-            className={`p-2 rounded-xl transition-colors ${
-              settings.darkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-[#E8DEF8]/50 text-brand-primary'
-            }`}
-            title="Download PDF FILE"
-          >
-            <Download className="w-4.5 h-4.5" />
+            <Printer className="w-4 h-4" />
+            <span>{settings.language === 'ar' ? 'طباعة' : 'Print'}</span>
           </button>
 
           {/* Embedded Local Search Trigger */}
           <button
             id="editor_btn_search"
-            onClick={() => setShowSearch(!showSearch)}
+            onClick={() => {
+              setShowSearch(!showSearch);
+              setShowOverflowDropdown(false);
+            }}
             className={`p-2 rounded-xl transition-colors ${
               showSearch 
                 ? 'bg-brand-primary text-white' 
@@ -529,6 +548,121 @@ export default function EditorView({
           >
             <Search className="w-4.5 h-4.5" />
           </button>
+
+          {/* Overflow Menu Trigger (Three Dot ⋮ Menu) */}
+          <div className="relative">
+            <button
+              id="editor_btn_overflow"
+              ref={buttonRef}
+              onClick={() => setShowOverflowDropdown(!showOverflowDropdown)}
+              className={`p-2 rounded-xl transition-colors flex items-center justify-center ${
+                showOverflowDropdown
+                  ? 'bg-brand-primary/10 text-brand-primary'
+                  : settings.darkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-[#E8DEF8]/50 text-brand-primary'
+              }`}
+              title="More Actions"
+            >
+              <MoreVertical className="w-4.5 h-4.5" />
+            </button>
+
+            {/* Float Dropdown Overflow Menu */}
+            <AnimatePresence>
+              {showOverflowDropdown && (
+                <motion.div
+                  ref={dropdownRef}
+                  initial={{ opacity: 0, scale: 0.95, y: dropdownPlacement.alignY === 'top' ? -10 : 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: dropdownPlacement.alignY === 'top' ? -10 : 10 }}
+                  transition={{ duration: 0.12, ease: 'easeOut' }}
+                  style={{
+                    position: 'absolute',
+                    top: dropdownPlacement.top,
+                    bottom: dropdownPlacement.bottom,
+                    left: dropdownPlacement.left,
+                    right: dropdownPlacement.right,
+                    transformOrigin: `${dropdownPlacement.alignY === 'top' ? 'top' : 'bottom'} ${dropdownPlacement.alignX}`,
+                  }}
+                  className="w-52 rounded-2xl border p-2 shadow-2xl z-50 font-semibold text-xs bg-zinc-950 border-zinc-800 text-zinc-200 shadow-black/80"
+                >
+                  {/* Scenes */}
+                  <button
+                    id="menu_item_scenes"
+                    onClick={() => {
+                      setShowOverflowDropdown(false);
+                      setShowSceneList(!showSceneList);
+                      setShowStats(false);
+                      setShowCharacters(false);
+                    }}
+                    className="w-full flex items-center justify-start gap-2.5 px-3 py-2.5 rounded-xl transition-colors cursor-pointer hover:bg-zinc-900 text-zinc-200"
+                    style={{ direction: isRtl ? 'rtl' : 'ltr' }}
+                  >
+                    <Compass className="w-4 h-4 text-brand-primary shrink-0" />
+                    <span className="truncate">{t.sceneList || (settings.language === 'ar' ? 'مخطط المشاهد' : 'Scenes List')}</span>
+                  </button>
+
+                  {/* Characters */}
+                  <button
+                    id="menu_item_characters"
+                    onClick={() => {
+                      setShowOverflowDropdown(false);
+                      setShowCharacters(!showCharacters);
+                      setShowStats(false);
+                      setShowSceneList(false);
+                    }}
+                    className="w-full flex items-center justify-start gap-2.5 px-3 py-2.5 rounded-xl transition-colors cursor-pointer hover:bg-zinc-900 text-zinc-200"
+                    style={{ direction: isRtl ? 'rtl' : 'ltr' }}
+                  >
+                    <Users className="w-4 h-4 text-brand-primary shrink-0" />
+                    <span className="truncate">{settings.language === 'ar' ? 'البطل والشخصيات' : 'Characters Database'}</span>
+                  </button>
+
+                  {/* Statistics */}
+                  <button
+                    id="menu_item_stats"
+                    onClick={() => {
+                      setShowOverflowDropdown(false);
+                      setShowStats(!showStats);
+                      setShowSceneList(false);
+                      setShowCharacters(false);
+                    }}
+                    className="w-full flex items-center justify-start gap-2.5 px-3 py-2.5 rounded-xl transition-colors cursor-pointer hover:bg-zinc-900 text-zinc-200"
+                    style={{ direction: isRtl ? 'rtl' : 'ltr' }}
+                  >
+                    <BarChart3 className="w-4 h-4 text-brand-primary shrink-0" />
+                    <span className="truncate">{t.statistics || (settings.language === 'ar' ? 'الإحصائيات' : 'Project Statistics')}</span>
+                  </button>
+
+                  {/* Import Script */}
+                  <button
+                    id="menu_item_import"
+                    onClick={() => {
+                      setShowOverflowDropdown(false);
+                      setShowImportDialog(true);
+                    }}
+                    className="w-full flex items-center justify-start gap-2.5 px-3 py-2.5 rounded-xl transition-colors cursor-pointer hover:bg-zinc-900 text-zinc-200"
+                    style={{ direction: isRtl ? 'rtl' : 'ltr' }}
+                  >
+                    <Upload className="w-4 h-4 text-brand-primary shrink-0" />
+                    <span className="truncate">{settings.language === 'ar' ? 'استيراد سيناريو' : 'Import Script'}</span>
+                  </button>
+
+                  {/* Direct Download Fast PDF */}
+                  <button
+                    id="menu_item_export"
+                    onClick={() => {
+                      setShowOverflowDropdown(false);
+                      onExportPdf();
+                    }}
+                    className="w-full flex items-center justify-start gap-2.5 px-3 py-2.5 rounded-xl transition-colors cursor-pointer border-t border-dashed border-zinc-800/60 mt-1 pt-1.5 hover:bg-zinc-900 text-zinc-200"
+                    style={{ direction: isRtl ? 'rtl' : 'ltr' }}
+                  >
+                    <Download className="w-4 h-4 text-brand-primary shrink-0" />
+                    <span className="truncate">{settings.language === 'ar' ? 'تنزيل ملف PDF' : 'Download PDF File'}</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 

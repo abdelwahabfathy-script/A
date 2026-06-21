@@ -260,14 +260,18 @@ export function generatePDF(project: ScreenplayProject, settings: UserSettings):
 export function printScreenplay(project: ScreenplayProject, settings: UserSettings): void {
   const isAr = settings.language === 'ar';
   const dir = isAr ? 'rtl' : 'ltr';
-  
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Please allow popups to preview and print the screenplay!');
-    return;
-  }
 
-  let formattedBlocksHtml = '';
+  // Estimate line-height for pagination
+  interface PrintBlock {
+    text: string;
+    className: string;
+  }
+  
+  const pages: { blocks: PrintBlock[] }[] = [];
+  let currentLines = 0;
+  const maxLinesPerPage = 46; // standard available lines per printed A4 page (accounting for margins & padding)
+
+  pages.push({ blocks: [] });
   let sceneCount = 0;
 
   project.blocks.forEach((block) => {
@@ -294,61 +298,160 @@ export function printScreenplay(project: ScreenplayProject, settings: UserSettin
       className = 'block-center';
     }
 
-    formattedBlocksHtml += `<div class="${className}">${text}</div>`;
+    // Estimate line count for this block
+    let blockLines = 1.5;
+    if (block.type === 'SCENE_HEADING') {
+      blockLines = 4.5;
+    } else if (block.type === 'ACTION') {
+      blockLines = Math.max(1, Math.ceil(text.length / 70)) + 1;
+    } else if (block.type === 'CHARACTER') {
+      blockLines = 1.5;
+    } else if (block.type === 'DIALOGUE') {
+      blockLines = Math.max(1, Math.ceil(text.length / 45)) + 1;
+    } else if (block.type === 'PARENTHETICAL') {
+      blockLines = 1.5;
+    } else if (block.type === 'TRANSITION') {
+      blockLines = 2.5;
+    } else if (block.type === 'SHOT') {
+      blockLines = 2.5;
+    }
+
+    // If adding this block overflows, move to next page
+    if (currentLines + blockLines > maxLinesPerPage && pages[pages.length - 1].blocks.length > 0) {
+      pages.push({ blocks: [] });
+      currentLines = 0;
+    }
+
+    pages[pages.length - 1].blocks.push({ text, className });
+    currentLines += blockLines;
   });
 
-  printWindow.document.write(`
+  // Construct paginated HTML content
+  let pagesHtml = '';
+  pages.forEach((page, index) => {
+    const pageNum = index + 1;
+    
+    // On page 1, optionally render cover title block
+    const coverTitleHeader = pageNum === 1 ? `
+      <div style="text-align: center; margin-top: 15mm; margin-bottom: 10mm;">
+        <h1 style="font-size: 22pt; margin: 0; font-family: 'Arial', sans-serif; font-weight: bold; letter-spacing: -0.5px;">${project.title}</h1>
+        <p style="font-size: 12pt; color: #555; margin-top: 6px; margin-bottom: 15px;">${isAr ? 'سيناريو كتابة' : 'A Screenplay'}</p>
+        <hr style="border: 0; border-top: 1px solid #ddd; width: 100%; margin-bottom: 25px;" />
+      </div>
+    ` : '';
+
+    pagesHtml += `
+      <div class="page-container">
+        <div class="page-number">${pageNum}.</div>
+        ${coverTitleHeader}
+        ${page.blocks.map(b => `<div class="${b.className}">${b.text}</div>`).join('')}
+      </div>
+    `;
+  });
+
+  // Use iframe fallback to support printing inside native PWA mode or sandbox where window.open is blocked
+  let printWindow: Window | null = null;
+  let iframe: HTMLIFrameElement | null = null;
+
+  try {
+    printWindow = window.open('', '_blank');
+  } catch (e) {
+    console.warn('window.open blocked, falling back to hidden iframe.');
+  }
+
+  if (!printWindow) {
+    // Creating an invisible temporary iframe
+    iframe = document.createElement('iframe');
+    iframe.id = 'print-screenplay-iframe-fallback';
+    iframe.style.position = 'fixed';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
+    iframe.style.bottom = '0px';
+    iframe.style.right = '0px';
+    iframe.style.opacity = '0';
+    iframe.style.zIndex = '-9999';
+    document.body.appendChild(iframe);
+    printWindow = iframe.contentWindow;
+  }
+
+  if (!printWindow) {
+    alert(isAr 
+      ? 'عذرًا، لم نتمكن من تهيئة بيئة الطباعة. يرجى إلغاء حظر النوافذ المنبثقة.' 
+      : 'Could not initialize printing. Please allow popups or try again.'
+    );
+    return;
+  }
+
+  const printDocument = printWindow.document;
+  printDocument.open();
+  printDocument.write(`
     <!DOCTYPE html>
     <html dir="${dir}" lang="${settings.language}">
     <head>
       <meta charset="utf-8">
       <title>${project.title}</title>
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
         
         @page {
-          size: A4;
+          size: A4 portrait;
           margin: 0;
         }
 
         body {
-          font-family: 'Arial', 'Cairo', 'Amiri', sans-serif;
+          font-family: 'Arial', 'Cairo', sans-serif;
           font-size: ${settings.fontSize}pt;
-          line-height: 1.6;
+          line-height: 1.5;
           color: #000;
-          background-color: #fff;
+          background-color: #f1f5f9;
           margin: 0;
           padding: 0;
           box-sizing: border-box;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
 
         /* Screenplay A4 spacing margins simulating page layout */
         .page-container {
           box-sizing: border-box;
           width: 210mm;
-          min-height: 297mm;
+          height: 297mm;
           padding-top: 25mm;
           padding-bottom: 25mm;
           /* Binding margin: 38mm on bind side, 20mm on free side */
           padding-left: ${isAr ? '20mm' : '38mm'};
           padding-right: ${isAr ? '38mm' : '20mm'};
-          margin: 0 auto;
+          margin: 20px auto;
           position: relative;
           background: white;
-          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+          page-break-after: always;
+          page-break-inside: avoid;
+        }
+
+        .page-number {
+          position: absolute;
+          top: 15mm;
+          ${isAr ? 'left: 20mm;' : 'right: 20mm;'}
+          font-family: 'Arial', sans-serif;
+          font-size: 10pt;
+          color: #333;
         }
 
         @media print {
           body {
             background-color: transparent;
+            margin: 0;
+            padding: 0;
           }
           .page-container {
             box-shadow: none;
-            width: auto;
-            min-height: auto;
-            padding-left: ${isAr ? '20mm' : '38mm'};
-            padding-right: ${isAr ? '38mm' : '20mm'};
+            margin: 0;
+            width: 210mm;
+            height: 297mm;
             page-break-after: always;
+            page-break-inside: avoid;
           }
           .no-print {
             display: none !important;
@@ -365,113 +468,129 @@ export function printScreenplay(project: ScreenplayProject, settings: UserSettin
           font-family: system-ui, -apple-system, sans-serif;
           font-size: 14px;
           border-bottom: 1px solid #334155;
+          max-width: 210mm;
+          margin: 0 auto;
+          border-radius: 8px 8px 0 0;
+          margin-top: 10px;
         }
 
         .print-btn {
-          background-color: #3b82f6;
+          background-color: #6750A4;
           color: white;
           border: none;
           padding: 8px 16px;
           border-radius: 6px;
           cursor: pointer;
           font-weight: 600;
+          font-family: system-ui, sans-serif;
         }
         
         .print-btn:hover {
-          background-color: #2563eb;
+          opacity: 0.9;
         }
 
-        /* Standard Screenplay Elements layout styles */
+        /* Standard Screenplay Elements layout styles with explicit color printing adjust */
         .block-heading {
+          font-family: 'Arial', sans-serif;
           font-weight: bold;
           text-transform: uppercase;
-          background-color: #1E1E1E;
-          color: #FFFFFF;
-          padding: 10px 16px;
-          border-radius: 16px;
+          background-color: #1E1E1E !important; /* Dark scene heading box! */
+          color: #FFFFFF !important;
+          padding: 8px 14px;
+          border-radius: 8px;
           border-left: 6px solid #6750A4;
-          margin-top: 24px;
-          margin-bottom: 24px;
+          margin-top: 18px;
+          margin-bottom: 14px;
           text-align: ${isAr ? 'right' : 'left'};
           page-break-after: avoid;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          font-size: 1.1em;
+          page-break-inside: avoid;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          font-size: 1.05em;
         }
 
         .block-action {
-          margin-bottom: 12px;
+          margin-bottom: 10px;
           text-align: ${isAr ? 'right' : 'left'};
+          page-break-inside: avoid;
         }
 
         .block-character {
           font-weight: bold;
           text-transform: uppercase;
           text-align: center;
-          /* Indented in Hollywood screenplay: LTR ~94mm */
-          margin-top: 18px;
+          margin-top: 14px;
           margin-bottom: 2px;
           page-break-after: avoid;
+          page-break-inside: avoid;
         }
 
         .block-dialogue {
-          margin-bottom: 12px;
+          margin-bottom: 10px;
           /* Narrow centered dialogue margins */
-          margin-left: ${isAr ? '10%' : '20%'};
-          margin-right: ${isAr ? '20%' : '10%'};
-          max-width: 70%;
+          margin-left: ${isAr ? '12%' : '24%'};
+          margin-right: ${isAr ? '24%' : '12%'};
+          max-width: 64%;
           text-align: ${isAr ? 'right' : 'left'};
+          page-break-inside: avoid;
         }
 
         .block-parenthetical {
           text-align: center;
-          margin-left: ${isAr ? '15%' : '25%'};
-          margin-right: ${isAr ? '25%' : '15%'};
-          max-width: 60%;
+          margin-left: ${isAr ? '18%' : '30%'};
+          margin-right: ${isAr ? '30%' : '18%'};
+          max-width: 52%;
           font-size: 0.95em;
           margin-bottom: 2px;
           page-break-after: avoid;
+          page-break-inside: avoid;
         }
 
         .block-transition {
           text-transform: uppercase;
           text-align: ${isAr ? 'left' : 'right'};
-          margin-top: 18px;
-          margin-bottom: 18px;
+          margin-top: 14px;
+          margin-bottom: 14px;
+          page-break-inside: avoid;
         }
 
         .block-shot {
           font-weight: bold;
           text-transform: uppercase;
-          margin-top: 18px;
-          margin-bottom: 12px;
+          margin-top: 14px;
+          margin-bottom: 10px;
           text-align: ${isAr ? 'right' : 'left'};
+          page-break-inside: avoid;
         }
 
         .block-center {
           text-align: center;
-          margin-top: 24px;
-          margin-bottom: 24px;
+          margin-top: 18px;
+          margin-bottom: 18px;
+          page-break-inside: avoid;
         }
       </style>
     </head>
-    <body>
+    <body onload="window.focus(); ${iframe ? 'setTimeout(function() { window.print(); }, 250);' : 'window.print();'}">
       <div class="no-print-bar no-print">
         <span>${isAr ? 'تصدير النص للطباعة / الحفظ بملف PDF' : 'Print / Save Screenplay as PDF'}</span>
         <button class="print-btn" onclick="window.print()">${isAr ? 'طباعة / حفظ بملف PDF' : 'Print / Save PDF'}</button>
       </div>
       
-      <div class="page-container">
-        <h1 style="text-align: center; margin-top: 40px; margin-bottom: 10px; font-size: 24pt;">${project.title}</h1>
-        <p style="text-align: center; font-size: 14pt; color: #555; margin-bottom: 60px;">${isAr ? 'سيناريو كتابة' : 'A Screenplay'}</p>
-        
-        <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 50px;" />
-        
-        ${formattedBlocksHtml}
-      </div>
+      ${pagesHtml}
     </body>
     </html>
   `);
-  printWindow.document.close();
+  printDocument.close();
+
+  // Clean up if we used an iframe
+  if (iframe) {
+    setTimeout(() => {
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
+    }, 20000); // 20 seconds is secure buffer for triggering native print draw dialog
+  }
 }
 
 /**
